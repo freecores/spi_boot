@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-20 16:53:54 $
+Version: $Date: 2005-02-20 18:58:41 $
 
 
 Description
@@ -53,6 +53,32 @@ Some MMC might fail with this core as not all cards support CMD18
 (READ_MULTIPLE_BLOCK). Please consult the data sheet of your specific
 model. In case your MMC does not implement CMD18 you might want to have a look
 at the FPGA MMC-Card Config project.
+
+
+Tools
+-----
+
+Downloading the configuration data to the card is a straight forward
+process. The images have to be written starting at dedicated locations. For
+the provided toplevel designs, these locations are multiples of 256 K. I.e. 0,
+0x40000, 0x80000 and so forth.
+
+dd (part of the GNU coreutils) serves this purpose:
+$ dd if=ram_loader.bin of=/dev/sdX bs=512
+$ dd if=pongrom_6.bin of=/dev/sdX bs=512 seek=512
+$ dd if=pacman.bin of=/dev/sdX bs=512 seek=1024
+
+The name of the device node depends on how the card reader is attached to the
+kernel. For linux systems this is most often something like /dev/sdX with X
+ranging from a-z. Please note that it is essential to use the device without
+any trailing numbers as they refer to partitions leading to wrong offsets for
+data written to the card.
+All this works perfectly for my Spartan IIe device as this FPGA expects the
+configuration data as it is delivered from the card: Consecutive bytes each
+with its most significant bit first. Altera devices like the FLEX family are
+different here. They expect the bytes with least significant bit
+first. Therefore, the configuration data has to be swapped bitwise before it
+is written to the card.
 
 
 Verification
