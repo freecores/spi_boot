@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic testbench element for a specific feature set
 --
--- $Id: tb_elem.vhd,v 1.4 2005-02-17 18:59:23 arniml Exp $
+-- $Id: tb_elem.vhd,v 1.5 2005-03-08 22:06:21 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -77,6 +77,7 @@ architecture behav of tb_elem is
     port (
       clk_i          : in  std_logic;
       reset_i        : in  std_logic;
+      set_sel_n_i    : in  std_logic_vector(3 downto 0);
       spi_clk_o      : out std_logic;
       spi_cs_n_o     : out std_logic;
       spi_data_in_i  : in  std_logic;
@@ -105,6 +106,8 @@ architecture behav of tb_elem is
     );
   end component;
 
+  signal reset_s : std_logic;
+
   -- SPI interface signals
   signal spi_clk_s            : std_logic;
   signal spi_data_to_card_s   : std_logic;
@@ -120,7 +123,9 @@ architecture behav of tb_elem is
   signal dat_done_s   : std_logic;
   signal cfg_clk_s    : std_logic;
   signal cfg_dat_s    : std_logic;
-  signal data_s       : unsigned( 7 downto 0);
+  signal data_s       : unsigned(7 downto 0);
+
+  signal set_sel_n_s : std_logic_vector(3 downto 0);
 
 begin
 
@@ -135,7 +140,8 @@ begin
   dut_b : chip
     port map (
       clk_i          => clk_i,
-      reset_i        => reset_i,
+      reset_i        => reset_s,
+      set_sel_n_i    => set_sel_n_s,
       spi_clk_o      => spi_clk_s,
       spi_cs_n_o     => spi_cs_n_s,
       spi_data_in_i  => spi_data_from_card_s,
@@ -214,6 +220,7 @@ begin
     variable dump_line : line;
     variable addr_v    : unsigned(31 downto 0);
     variable temp_v    : unsigned( 7 downto 0);
+    variable set_sel_v : unsigned(3 downto 0);
 
   begin
     -- default assignments
@@ -227,73 +234,107 @@ begin
     data_s       <= (others => '1');
     addr_v       := (others => '0');
     eos_o        <= false;
+    set_sel_n_s  <= (others => '1');
+    reset_s      <= '0';
 
-    wait for 100 us;
-    -- signal start
-    start_s <= '1';
-    wait until config_n_s = '0';
-    -- run through configuration sequence
-    rise_clk(1);
-    cfg_init_n_s <= '0';
-    rise_clk(3);
-    cfg_init_n_s <= '1';
+    -- loop through some sets
+    for set in 0 to 3 loop
+      set_sel_v := to_unsigned(set, 4);
+      addr_v(23 downto 20) := set_sel_v;  -- must match num_bits_per_img_g
+                                          -- plus width_img_cnt_g
+      set_sel_n_s <= not std_logic_vector(set_sel_v);
 
-    -- and receive 32 bytes from image 0
-    for i in 1 to 32 loop
-      temp_v := addr_v(0) & calc_crc(addr_v);
-      read_check_byte(temp_v);
-      addr_v := addr_v + 1;
+      assert false
+        report chip_type_g & ": Processing set " & to_string(set)
+        severity note;
+
+      wait for 100 us;
+      reset_s <= '1';
+
+      assert false
+        report chip_type_g & ": Requesting image 0"
+        severity note;
+
+      -- signal start
+      start_s    <= '1';
+      mode_s     <= '1';
+      cfg_done_s <= '0';
+      addr_v(19 downto 0) := (others => '0');
+      wait until config_n_s = '0';
+      -- run through configuration sequence
+      rise_clk(1);
+      cfg_init_n_s <= '0';
+      rise_clk(3);
+      cfg_init_n_s <= '1';
+
+      -- and receive 32 bytes from image 0
+      for i in 1 to 32 loop
+        temp_v := addr_v(0) & calc_crc(addr_v);
+        read_check_byte(temp_v);
+        addr_v := addr_v + 1;
+      end loop;
+      start_s    <= '0';
+      cfg_done_s <= '1';
+
+      rise_clk(10);
+
+      assert false
+        report chip_type_g & ": Requesting image 1"
+        severity note;
+
+      -- request next image
+      mode_s  <= '0';
+      start_s <= '1';
+      addr_v(17 downto  0) := (others => '0');
+      addr_v(19 downto 18) := "01"; -- must match num_bits_per_img_g in chip-*-a.vhd
+      dat_done_s <= '0';
+
+      -- receive another 32 bytes from image 1
+      for i in 1 to 32 loop
+        temp_v := addr_v(0) & calc_crc(addr_v);
+        read_check_byte(temp_v);
+        addr_v := addr_v + 1;
+      end loop;
+      start_s    <= '0';
+      dat_done_s <= '1';
+      
+
+      rise_clk(10);
+
+      assert false
+        report chip_type_g & ": Requesting image 2"
+        severity note;
+
+      -- request next image
+      mode_s  <= '1';
+      start_s <= '1';
+      addr_v(17 downto  0) := (others => '0');
+      addr_v(19 downto 18) := "10"; -- must match num_bits_per_img_g in chip-*-a.vhd
+
+      wait until config_n_s = '0';
+      -- run through configuration sequence
+      rise_clk(1);
+      cfg_done_s   <= '0';
+      cfg_init_n_s <= '0';
+      rise_clk(3);
+      cfg_init_n_s <= '1';
+
+      -- receive another 32 bytes from image 2
+      for i in 1 to 32 loop
+        temp_v := addr_v(0) & calc_crc(addr_v);
+        read_check_byte(temp_v);
+        addr_v := addr_v + 1;
+      end loop;
+      start_s    <= '0';
+      cfg_done_s <= '1';
+
+      -- give dut a chance to stop current transfer
+      wait until spi_cs_n_s = '1';
+      rise_clk(10);
+
+      reset_s <= '0';
     end loop;
-    start_s    <= '0';
-    cfg_done_s <= '1';
 
-    rise_clk(10);
-
-    -- request next image
-    mode_s  <= '0';
-    start_s <= '1';
-    addr_v  := (others => '0');
-    addr_v(19 downto 18) := "01"; -- must match num_bits_per_img_g in chip-*-a.vhd
-    dat_done_s <= '0';
-
-    -- receive another 32 bytes from image 1
-    for i in 1 to 32 loop
-      temp_v := addr_v(0) & calc_crc(addr_v);
-      read_check_byte(temp_v);
-      addr_v := addr_v + 1;
-    end loop;
-    start_s    <= '0';
-    dat_done_s <= '1';
-    
-
-    rise_clk(10);
-
-    -- request next image
-    mode_s  <= '1';
-    start_s <= '1';
-    addr_v  := (others => '0');
-    addr_v(19 downto 18) := "10"; -- must match num_bits_per_img_g in chip-*-a.vhd
-
-    wait until config_n_s = '0';
-    -- run through configuration sequence
-    rise_clk(1);
-    cfg_done_s   <= '0';
-    cfg_init_n_s <= '0';
-    rise_clk(3);
-    cfg_init_n_s <= '1';
-
-    -- receive another 32 bytes from image 2
-    for i in 1 to 32 loop
-      temp_v := addr_v(0) & calc_crc(addr_v);
-      read_check_byte(temp_v);
-      addr_v := addr_v + 1;
-    end loop;
-    start_s    <= '0';
-    cfg_done_s <= '1';
-
-    -- give dut a chance to stop current transfer
-    wait until spi_cs_n_s = '1';
-    rise_clk(10);
     eos_o <= true;
     wait;
   end process stim;
@@ -307,6 +348,9 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.4  2005/02/17 18:59:23  arniml
+-- clarify wording for images
+--
 -- Revision 1.3  2005/02/16 19:34:56  arniml
 -- add weak pull-ups for SPI lines
 --

@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel
 --
--- $Id: chip-e.vhd,v 1.1 2005-02-08 20:41:30 arniml Exp $
+-- $Id: chip-e.vhd,v 1.2 2005-03-08 22:07:11 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -54,6 +54,7 @@ entity chip is
     -- System Interface -------------------------------------------------------
     clk_i          : in  std_logic;
     reset_i        : in  std_logic;
+    set_sel_n_i    : in  std_logic_vector(3 downto 0);
     -- SD Card Interface ------------------------------------------------------
     spi_clk_o      : out std_logic;
     spi_cs_n_o     : out std_logic;
@@ -77,4 +78,7 @@ end chip;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.1  2005/02/08 20:41:30  arniml
+-- initial check-in
+--
 -------------------------------------------------------------------------------

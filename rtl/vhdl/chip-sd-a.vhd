@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel design with SD feature set
 --
--- $Id: chip-sd-a.vhd,v 1.3 2005-02-18 06:42:14 arniml Exp $
+-- $Id: chip-sd-a.vhd,v 1.4 2005-03-08 22:07:12 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -52,6 +52,7 @@ architecture sd of chip is
 
   component spi_boot
     generic (
+      width_set_sel_g      : integer := 4;
       width_bit_cnt_g      : integer := 6;
       width_img_cnt_g      : integer := 2;
       num_bits_per_img_g   : integer := 18;
@@ -63,6 +64,7 @@ architecture sd of chip is
     port (
       clk_i          : in  std_logic;
       reset_i        : in  std_logic;
+      set_sel_n_i    : in  std_logic_vector(width_set_sel_g-1 downto 0);
       spi_clk_o      : out std_logic;
       spi_cs_n_o     : out std_logic;
       spi_data_in_i  : in  std_logic;
@@ -88,6 +90,7 @@ begin
 
   spi_boot_b : spi_boot
     generic map (
+      width_set_sel_g      => 4,        -- 16 sets
       width_bit_cnt_g      => 12,       -- 512 bytes per block
       width_img_cnt_g      => 2,        -- 4 images
       num_bits_per_img_g   => 18,       -- 256 kByte per image
@@ -98,6 +101,7 @@ begin
     port map (
       clk_i                => clk_i,
       reset_i              => reset_i,
+      set_sel_n_i          => set_sel_n_i,
       spi_clk_o            => spi_clk_s,
       spi_cs_n_o           => spi_cs_n_s,
       spi_data_in_i        => spi_data_in_i,
@@ -133,6 +137,9 @@ end sd;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.3  2005/02/18 06:42:14  arniml
+-- clarify wording for images
+--
 -- Revision 1.2  2005/02/16 18:54:39  arniml
 -- added tri-state drivers for spi outputs
 --
