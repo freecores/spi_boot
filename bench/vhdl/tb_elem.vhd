@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic testbench element for a specific feature set
 --
--- $Id: tb_elem.vhd,v 1.2 2005-02-13 17:14:03 arniml Exp $
+-- $Id: tb_elem.vhd,v 1.3 2005-02-16 19:34:56 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -123,6 +123,11 @@ architecture behav of tb_elem is
   signal data_s       : unsigned( 7 downto 0);
 
 begin
+
+  -- weak pull-ups
+  spi_clk_s          <= 'H';
+  spi_cs_n_s         <= 'H';
+  spi_data_to_card_s <= 'H';
 
   -----------------------------------------------------------------------------
   -- DUT
@@ -302,6 +307,9 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.2  2005/02/13 17:14:03  arniml
+-- change dat_done handling
+--
 -- Revision 1.1  2005/02/08 21:09:20  arniml
 -- initial check-in
 --
