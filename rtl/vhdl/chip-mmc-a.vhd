@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel design with MMC feature set
 --
--- $Id: chip-mmc-a.vhd,v 1.2 2005-02-16 18:54:39 arniml Exp $
+-- $Id: chip-mmc-a.vhd,v 1.3 2005-02-18 06:42:13 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -53,8 +53,8 @@ architecture mmc of chip is
   component spi_boot
     generic (
       width_bit_cnt_g      : integer := 6;
-      width_set_cnt_g      : integer := 2;
-      num_bits_per_set_g   : integer := 18;
+      width_img_cnt_g      : integer := 2;
+      num_bits_per_img_g   : integer := 18;
       sd_init_g            : integer := 0;
       mmc_compat_clk_div_g : integer := 0;
       width_mmc_clk_div_g  : integer := 0;
@@ -89,8 +89,8 @@ begin
   spi_boot_b : spi_boot
     generic map (
       width_bit_cnt_g      => 12,       -- 512 bytes per block
-      width_set_cnt_g      => 2,        -- 4 sets
-      num_bits_per_set_g   => 18,       -- 256 kByte per set
+      width_img_cnt_g      => 2,        -- 4 images
+      num_bits_per_img_g   => 18,       -- 256 kByte per image
       sd_init_g            => 0,        -- no SD specific initialization
       mmc_compat_clk_div_g => 13,       -- MMC compat 400 kHz > 10 MHz / (13*2)
       width_mmc_clk_div_g  => 4         -- need 5 bits for MMC compat divider
@@ -133,6 +133,9 @@ end mmc;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.2  2005/02/16 18:54:39  arniml
+-- added tri-state drivers for spi outputs
+--
 -- Revision 1.1  2005/02/08 20:41:32  arniml
 -- initial check-in
 --

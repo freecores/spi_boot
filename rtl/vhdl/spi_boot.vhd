@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.3 2005-02-16 18:59:10 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.4 2005-02-18 06:42:08 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -52,10 +52,10 @@ entity spi_boot is
   generic (
     -- width of bit counter: minimum 6, maximum 12
     width_bit_cnt_g      : integer := 6;
-    -- width of set counter: minimum 0, maximum n
-    width_set_cnt_g      : integer := 2;
-    -- number of bits required to address one set
-    num_bits_per_set_g   : integer := 18;
+    -- width of image counter: minimum 0, maximum n
+    width_img_cnt_g      : integer := 2;
+    -- number of bits required to address one image
+    num_bits_per_img_g   : integer := 18;
     -- SD specific initialization
     sd_init_g            : integer := 0;
     -- clock divider to reach 400 kHz for MMC compatibility
@@ -123,7 +123,7 @@ architecture rtl of spi_boot is
                          WAIT_INIT_LOW, WAIT_INIT_HIGH,
                          CMD18, CMD18_DATA,
                          CMD12,
-                         INC_SET_CNT);
+                         INC_IMG_CNT);
   --
   signal ctrl_fsm_q,
          ctrl_fsm_s  : ctrl_states_t;
@@ -160,8 +160,8 @@ architecture rtl of spi_boot is
 
   signal start_q        : std_logic;
 
-  signal set_cnt_s      : std_logic_vector(width_set_cnt_g downto 0);
-  signal cnt_en_set_s   : boolean;
+  signal img_cnt_s      : std_logic_vector(width_img_cnt_g downto 0);
+  signal cnt_en_img_s   : boolean;
   signal mmc_cnt_ovfl_s : boolean;
   signal mmc_compat_s   : boolean;
 
@@ -458,7 +458,7 @@ begin
     -- default assignments
     ctrl_fsm_s   <= POWER_UP1;
     config_n_o   <= '1';
-    cnt_en_set_s <= false;
+    cnt_en_img_s <= false;
     spi_cs_n_s   <= '0';
     mmc_compat_v := false;
     en_outs_s    <= true;
@@ -628,17 +628,17 @@ begin
        -- Issued CMD12: STOP_TRANSMISSION --------------------------------------
        when CMD12 =>
          if cmd_finished_s then
-           ctrl_fsm_s <= INC_SET_CNT;
+           ctrl_fsm_s <= INC_IMG_CNT;
          else
            ctrl_fsm_s <= CMD12;
          end if;
 
 
-      -- Increment Set Counter ------------------------------------------------
-      when INC_SET_CNT =>
+      -- Increment Image Counter ----------------------------------------------
+      when INC_IMG_CNT =>
         spi_cs_n_s   <= '1';
         ctrl_fsm_s   <= WAIT_START;
-        cnt_en_set_s <= true;
+        cnt_en_img_s <= true;
 
 
 
@@ -795,7 +795,7 @@ begin
   transmit: process (ctrl_fsm_q,
                      cmd_fsm_q,
                      bit_cnt_q,
-                     set_cnt_s,
+                     img_cnt_s,
                      send_cmd12_q,
                      upper_bitcnt_zero_s)
 
@@ -834,8 +834,8 @@ begin
           tx_v := true;
         when CMD18 =>
           cmd_v(cmd_r) := cmd18_c;
-          cmd_v(8 + num_bits_per_set_g + width_set_cnt_g downto 8 + num_bits_per_set_g)
-            := set_cnt_s;
+          cmd_v(8 + num_bits_per_img_g + width_img_cnt_g downto 8 + num_bits_per_img_g)
+            := img_cnt_s;
           tx_v := true;
         when CMD18_DATA =>
           cmd_v(cmd_r) := cmd12_c;
@@ -865,27 +865,27 @@ begin
 
 
   -----------------------------------------------------------------------------
-  -- Optional Set Counter
+  -- Optional Image Counter
   -----------------------------------------------------------------------------
-  set_cnt: if width_set_cnt_g > 0 generate
-    set_cnt_b : spi_counter
+  img_cnt: if width_img_cnt_g > 0 generate
+    img_cnt_b : spi_counter
       generic map (
-        cnt_width_g   => width_set_cnt_g,
-        cnt_max_g     => 2**width_set_cnt_g - 1,
+        cnt_width_g   => width_img_cnt_g,
+        cnt_max_g     => 2**width_img_cnt_g - 1,
         reset_level_g => reset_level_g
       )
       port map (
         clk_i         => clk_i,
         reset_i       => reset_i,
-        cnt_en_i      => cnt_en_set_s,
-        cnt_o         => set_cnt_s(width_set_cnt_g-1 downto 0),
+        cnt_en_i      => cnt_en_img_s,
+        cnt_o         => img_cnt_s(width_img_cnt_g-1 downto 0),
         cnt_ovfl_o    => open
       );
-    set_cnt_s(width_set_cnt_g) <= '0';
+    img_cnt_s(width_img_cnt_g) <= '0';
   end generate;
 
-  no_set_cnt: if width_set_cnt_g = 0 generate
-    set_cnt_s <= (others => '0');
+  no_img_cnt: if width_img_cnt_g = 0 generate
+    img_cnt_s <= (others => '0');
   end generate;
 
 
@@ -932,6 +932,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.3  2005/02/16 18:59:10  arniml
+-- include output enable control for SPI outputs
+--
 -- Revision 1.2  2005/02/13 17:25:51  arniml
 -- major update to fix several problems
 -- configuration/data download of multiple sets works now
