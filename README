@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-18 06:54:36 $
+Version: $Date: 2005-02-20 13:13:24 $
 
 
 Description
@@ -78,6 +78,16 @@ spi_boot
     \-- sim
          |
          \-- rtl_sim        : Directory for running simulations.
+
+
+RAM Loader
+----------
+
+Directory rtl/vhdl/ram_loader contains the sample design which loads the next
+image from the card and stores its contents to external asynchronous
+RAM. After reading 64 KB it triggers a new configuration process for the final
+FPGA design.
+Refer to the code for the mechanisms involved.
 
 
 Compiling the VHDL Code
