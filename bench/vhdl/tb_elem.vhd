@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic testbench element for a specific feature set
 --
--- $Id: tb_elem.vhd,v 1.3 2005-02-16 19:34:56 arniml Exp $
+-- $Id: tb_elem.vhd,v 1.4 2005-02-17 18:59:23 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -238,7 +238,7 @@ begin
     rise_clk(3);
     cfg_init_n_s <= '1';
 
-    -- and receive 32 bytes from set 0
+    -- and receive 32 bytes from image 0
     for i in 1 to 32 loop
       temp_v := addr_v(0) & calc_crc(addr_v);
       read_check_byte(temp_v);
@@ -249,14 +249,14 @@ begin
 
     rise_clk(10);
 
-    -- request next set
+    -- request next image
     mode_s  <= '0';
     start_s <= '1';
     addr_v  := (others => '0');
-    addr_v(19 downto 18) := "01"; -- must match num_bits_per_set_g in chip-*-a.vhd
+    addr_v(19 downto 18) := "01"; -- must match num_bits_per_img_g in chip-*-a.vhd
     dat_done_s <= '0';
 
-    -- receive another 32 bytes from set 1
+    -- receive another 32 bytes from image 1
     for i in 1 to 32 loop
       temp_v := addr_v(0) & calc_crc(addr_v);
       read_check_byte(temp_v);
@@ -268,11 +268,11 @@ begin
 
     rise_clk(10);
 
-    -- request next set
+    -- request next image
     mode_s  <= '1';
     start_s <= '1';
     addr_v  := (others => '0');
-    addr_v(19 downto 18) := "10"; -- must match num_bits_per_set_g in chip-*-a.vhd
+    addr_v(19 downto 18) := "10"; -- must match num_bits_per_img_g in chip-*-a.vhd
 
     wait until config_n_s = '0';
     -- run through configuration sequence
@@ -282,7 +282,7 @@ begin
     rise_clk(3);
     cfg_init_n_s <= '1';
 
-    -- receive another 32 bytes from set 2
+    -- receive another 32 bytes from image 2
     for i in 1 to 32 loop
       temp_v := addr_v(0) & calc_crc(addr_v);
       read_check_byte(temp_v);
@@ -307,6 +307,9 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.3  2005/02/16 19:34:56  arniml
+-- add weak pull-ups for SPI lines
+--
 -- Revision 1.2  2005/02/13 17:14:03  arniml
 -- change dat_done handling
 --
