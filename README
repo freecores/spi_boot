@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-20 13:33:33 $
+Version: $Date: 2005-02-20 13:39:06 $
 
 
 Description
@@ -20,12 +20,12 @@ provides an initial configuration data from the first image to the FPGA. This
 image contains a design which pulls the next image from the memory card and
 transfers this data to SRAM. In the third step the final FPGA design is loaded
 from the third image.
-
 The schematic (rev. A) shows how the core can be used with an FPGA board. I
 use it to configure/boot the Xilinx Spartan IIe on BurchED's B5-X300
 board. SV2 fits the "SERIAL MODE" connector on this board but you will have to
 add a separate wire from R6 to attach INIT. Please check the proper use of the
 pull-up resistors for your specific board.
+
 
 Features
 --------
