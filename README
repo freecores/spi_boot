@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-20 18:58:41 $
+Version: $Date: 2005-02-27 19:05:14 $
 
 
 Description
@@ -30,7 +30,7 @@ pull-up resistors for your specific board.
 Features
 --------
 
-* Configuration mode: configurates SRAM based FPGAs via slave serial mode
+* Configuration mode: configures SRAM based FPGAs via slave serial mode
   (Xilinx and Altera)
 * Data mode: provides stored data over a simple synchronous serial interface
 * Broad compatability using SPI mode
@@ -69,7 +69,7 @@ $ dd if=pongrom_6.bin of=/dev/sdX bs=512 seek=512
 $ dd if=pacman.bin of=/dev/sdX bs=512 seek=1024
 
 The name of the device node depends on how the card reader is attached to the
-kernel. For linux systems this is most often something like /dev/sdX with X
+kernel. For Linux systems this is most often something like /dev/sdX with X
 ranging from a-z. Please note that it is essential to use the device without
 any trailing numbers as they refer to partitions leading to wrong offsets for
 data written to the card.
