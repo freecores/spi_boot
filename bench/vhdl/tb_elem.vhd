@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic testbench element for a specific feature set
 --
--- $Id: tb_elem.vhd,v 1.1 2005-02-08 21:09:20 arniml Exp $
+-- $Id: tb_elem.vhd,v 1.2 2005-02-13 17:14:03 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -218,7 +218,7 @@ begin
     mode_s       <= '1';
     cfg_init_n_s <= '1';
     cfg_done_s   <= '0';
-    dat_done_s   <= '0';
+    dat_done_s   <= '1';
     data_s       <= (others => '1');
     addr_v       := (others => '0');
     eos_o        <= false;
@@ -249,6 +249,7 @@ begin
     start_s <= '1';
     addr_v  := (others => '0');
     addr_v(19 downto 18) := "01"; -- must match num_bits_per_set_g in chip-*-a.vhd
+    dat_done_s <= '0';
 
     -- receive another 32 bytes from set 1
     for i in 1 to 32 loop
@@ -301,4 +302,7 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.1  2005/02/08 21:09:20  arniml
+-- initial check-in
+--
 -------------------------------------------------------------------------------
