@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.1 2005-02-08 20:41:33 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.2 2005-02-13 17:25:51 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -275,14 +275,13 @@ begin
       -- after reset even though start_i is tied to '1'
       if start_i = '0' then
         start_q <= '0';
-      elsif ctrl_fsm_q = CMD18 then
+      elsif ctrl_fsm_q = WAIT_START and cmd_finished_s then
         start_q <= start_i;
       end if;
 
       -- Marker for cfg_done and dat_done
       if ctrl_fsm_q = CMD18_DATA then
-        if (cfg_done_i = '1' and mode_i = '1') or
-           (dat_done_i = '1' and mode_i = '0') then
+        if cfg_done_i = '1' and dat_done_i = '1' then
           done_q       <= true;
         end if;
 
@@ -606,20 +605,20 @@ begin
       --
       -- receive a data block
       when CMD18_DATA =>
-         if cmd_finished_s then
-           ctrl_fsm_s   <= CMD12;
-         else
-           ctrl_fsm_s   <= CMD18_DATA;
-         end if;
-
-
-       -- Issued CMD12: STOP_TRANSMISSION -------------------------------------
-       when CMD12 =>
         if cmd_finished_s then
-          ctrl_fsm_s <= INC_SET_CNT;
+          ctrl_fsm_s   <= CMD12;
         else
-          ctrl_fsm_s <= CMD12;
+          ctrl_fsm_s   <= CMD18_DATA;
         end if;
+
+
+       -- Issued CMD12: STOP_TRANSMISSION --------------------------------------
+       when CMD12 =>
+         if cmd_finished_s then
+           ctrl_fsm_s <= INC_SET_CNT;
+         else
+           ctrl_fsm_s <= CMD12;
+         end if;
 
 
       -- Increment Set Counter ------------------------------------------------
@@ -688,11 +687,18 @@ begin
       when CMD =>
         if cnt_zero_v then
           if ctrl_fsm_q /= CMD18_DATA then
+            -- normal commands including CMD12 require startbit of R1 response
             cmd_fsm_s <= START;
           else
-            -- CMD18_DATA needs to read CRC
-            cmd_fsm_s <= R1;
-            res_bc_s  <= RES_15;
+            if not send_cmd12_q then
+              -- CMD18_DATA needs to read CRC
+              cmd_fsm_s <= R1;
+              res_bc_s <= RES_15;
+            else
+              -- CMD18_DATA finished, scan for startbit of response
+              cmd_finished_s <= true;
+              cmd_fsm_s      <= START;
+            end if;
           end if;
         else
           cmd_fsm_s <= CMD;
@@ -731,9 +737,8 @@ begin
             --   * R1 response of CMD12
             cmd_fsm_s        <= START;
 
-            if ctrl_fsm_q = CMD18 or send_cmd12_q then
-              -- CMD18        : response received -> advance to CMD18_DATA
-              -- send_cmd12_q : CRC of last block received -> advance to CMD12
+            if ctrl_fsm_q = CMD18 then
+              -- CMD18 response received -> advance to CMD18_DATA
               cmd_finished_s <= true;
             end if;
           end if;
@@ -786,12 +791,12 @@ begin
     subtype ext_cmd_t is std_logic_vector(63 downto 0);
     --                            STCCCCCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcccccccS
     constant cmd0_c   : cmd_t := "010000000000000000000000000000000000000010010101";
-    constant cmd1_c   : cmd_t := "01000001---------------------------------------1";
-    constant cmd12_c  : cmd_t := "01001100---------------------------------------1";
+    constant cmd1_c   : cmd_t := "0100000100000000000000000000000000000000-------1";
+    constant cmd12_c  : cmd_t := "0100110000000000000000000000000000000000-------1";
     constant cmd16_c  : cmd_t := "0101000000000000000000000000000000000000-------1";
     constant cmd18_c  : cmd_t := "0101001000000000000000000000000000000000-------1";
-    constant cmd55_c  : cmd_t := "01110111---------------------------------------1";
-    constant acmd41_c : cmd_t := "01101001---------------------------------------1";
+    constant cmd55_c  : cmd_t := "0111011100000000000000000000000000000000-------1";
+    constant acmd41_c : cmd_t := "0110100100000000000000000000000000000000-------1";
 
     variable cmd_v      : ext_cmd_t;
     variable tx_v       : boolean;
@@ -911,4 +916,7 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.1  2005/02/08 20:41:33  arniml
+-- initial check-in
+--
 -------------------------------------------------------------------------------
