@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel design with full feature set
 --
--- $Id: chip-full-a.vhd,v 1.1 2005-02-08 20:41:31 arniml Exp $
+-- $Id: chip-full-a.vhd,v 1.2 2005-02-16 18:54:37 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -67,6 +67,7 @@ architecture full of chip is
       spi_cs_n_o     : out std_logic;
       spi_data_in_i  : in  std_logic;
       spi_data_out_o : out std_logic;
+      spi_en_outs_o  : out std_logic;
       start_i        : in  std_logic;
       mode_i         : in  std_logic;
       config_n_o     : out std_logic;
@@ -77,6 +78,11 @@ architecture full of chip is
       cfg_dat_o      : out std_logic
     );
   end component;
+
+  signal spi_clk_s      : std_logic;
+  signal spi_cs_n_s     : std_logic;
+  signal spi_data_out_s : std_logic;
+  signal spi_en_outs_s  : std_logic;
 
 begin
 
@@ -92,10 +98,11 @@ begin
     port map (
       clk_i                => clk_i,
       reset_i              => reset_i,
-      spi_clk_o            => spi_clk_o,
-      spi_cs_n_o           => spi_cs_n_o,
+      spi_clk_o            => spi_clk_s,
+      spi_cs_n_o           => spi_cs_n_s,
       spi_data_in_i        => spi_data_in_i,
-      spi_data_out_o       => spi_data_out_o,
+      spi_data_out_o       => spi_data_out_s,
+      spi_en_outs_o        => spi_en_outs_s,
       start_i              => start_i,
       mode_i               => mode_i,
       config_n_o           => config_n_o,
@@ -106,6 +113,19 @@ begin
       cfg_dat_o            => cfg_dat_o
     );
 
+  -----------------------------------------------------------------------------
+  -- Three state drivers for SPI outputs.
+  -----------------------------------------------------------------------------
+  spi_clk_o      <=   spi_clk_s
+                    when spi_en_outs_s = '1' else
+                      'Z';
+  spi_cs_n_o     <=   spi_cs_n_s
+                    when spi_en_outs_s = '1' else
+                      'Z';
+  spi_data_out_o <=   spi_data_out_s
+                    when spi_en_outs_s = '1' else
+                      'Z';
+
 end full;
 
 
@@ -113,4 +133,7 @@ end full;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.1  2005/02/08 20:41:31  arniml
+-- initial check-in
+--
 -------------------------------------------------------------------------------
