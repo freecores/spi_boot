@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-20 13:13:24 $
+Version: $Date: 2005-02-20 13:33:33 $
 
 
 Description
@@ -21,6 +21,11 @@ image contains a design which pulls the next image from the memory card and
 transfers this data to SRAM. In the third step the final FPGA design is loaded
 from the third image.
 
+The schematic (rev. A) shows how the core can be used with an FPGA board. I
+use it to configure/boot the Xilinx Spartan IIe on BurchED's B5-X300
+board. SV2 fits the "SERIAL MODE" connector on this board but you will have to
+add a separate wire from R6 to attach INIT. Please check the proper use of the
+pull-up resistors for your specific board.
 
 Features
 --------
@@ -121,6 +126,9 @@ References
 
   * Toshiba SD Card Specification
     http://i.cmpnet.com/chipcenter/memory/images/prod055.pdf
+
+  * BurchED
+    http://burched.biz/
 
   * FPGA MMC-Card Config project
     http://www.opencores.org/projects.cgi/web/mmcfpgaconfig/overview
