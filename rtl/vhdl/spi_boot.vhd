@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.2 2005-02-13 17:25:51 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.3 2005-02-16 18:59:10 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -74,6 +74,7 @@ entity spi_boot is
     spi_cs_n_o     : out std_logic;
     spi_data_in_i  : in  std_logic;
     spi_data_out_o : out std_logic;
+    spi_en_outs_o  : out std_logic;
     -- FPGA Configuration Interface -------------------------------------------
     start_i        : in  std_logic;
     mode_i         : in  std_logic;
@@ -170,6 +171,9 @@ architecture rtl of spi_boot is
   signal done_q,
          send_cmd12_q   : boolean;
 
+  signal en_outs_s,
+         en_outs_q      : boolean;
+
   signal true_s         : boolean;
 
 begin
@@ -200,6 +204,7 @@ begin
       ctrl_fsm_q   <= POWER_UP1;
       cmd_fsm_q    <= CMD;
       r1_result_q  <= '0';
+      en_outs_q    <= true;
 
     elsif clk_i'event and clk_i = '1' then
       -- bit counter control
@@ -300,6 +305,11 @@ begin
         -- an end without interruption or generation of unwanted cfg_clk_q
         done_q         <= false;
         send_cmd12_q   <= false;
+      end if;
+
+      -- output enable
+      if spi_clk_rising_q then
+        en_outs_q <= en_outs_s;
       end if;
 
     end if;
@@ -451,6 +461,7 @@ begin
     cnt_en_set_s <= false;
     spi_cs_n_s   <= '0';
     mmc_compat_v := false;
+    en_outs_s    <= true;
 
     case ctrl_fsm_q is
       -- Let card finish power up, step 1 -------------------------------------
@@ -564,9 +575,11 @@ begin
               ctrl_fsm_s <= WAIT_INIT_LOW;
             end if;
           else
+            en_outs_s    <= false;
             ctrl_fsm_s   <= WAIT_START;
           end if;
         else
+          en_outs_s      <= false;
           ctrl_fsm_s     <= WAIT_START;
         end if;
 
@@ -903,9 +916,12 @@ begin
   -----------------------------------------------------------------------------
   -- Output Mapping
   -----------------------------------------------------------------------------
-  spi_clk_o      <= spi_clk_q;
-  spi_cs_n_o     <= spi_cs_n_q;
-  spi_data_out_o <= spi_dat_q;
+  spi_clk_o      <=   spi_clk_q;
+  spi_cs_n_o     <=   spi_cs_n_q;
+  spi_data_out_o <=   spi_dat_q;
+  spi_en_outs_o  <=   '1'
+                    when en_outs_q else
+                      '0';
   cfg_clk_o      <= cfg_clk_q;
   cfg_dat_o      <= cfg_dat_q;
 
@@ -916,6 +932,10 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.2  2005/02/13 17:25:51  arniml
+-- major update to fix several problems
+-- configuration/data download of multiple sets works now
+--
 -- Revision 1.1  2005/02/08 20:41:33  arniml
 -- initial check-in
 --
