@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel design with minimal feature set
 --
--- $Id: chip-minimal-a.vhd,v 1.4 2005-03-08 22:07:12 arniml Exp $
+-- $Id: chip-minimal-a.vhd,v 1.5 2005-03-09 19:48:34 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -64,7 +64,7 @@ architecture minimal of chip is
     port (
       clk_i          : in  std_logic;
       reset_i        : in  std_logic;
-      set_sel_n_i    : in  std_logic_vector(width_set_sel_g-1 downto 0);
+      set_sel_i      : in  std_logic_vector(width_set_sel_g-1 downto 0);
       spi_clk_o      : out std_logic;
       spi_cs_n_o     : out std_logic;
       spi_data_in_i  : in  std_logic;
@@ -86,7 +86,11 @@ architecture minimal of chip is
   signal spi_data_out_s : std_logic;
   signal spi_en_outs_s  : std_logic;
 
+  signal set_sel_s      : std_logic_vector(3 downto 0);
+
 begin
+
+  set_sel_s <= not set_sel_n_i;
 
   spi_boot_b : spi_boot
     generic map (
@@ -101,7 +105,7 @@ begin
     port map (
       clk_i                => clk_i,
       reset_i              => reset_i,
-      set_sel_n_i          => set_sel_n_i,
+      set_sel_i            => set_sel_s,
       spi_clk_o            => spi_clk_s,
       spi_cs_n_o           => spi_cs_n_s,
       spi_data_in_i        => spi_data_in_i,
@@ -137,6 +141,9 @@ end minimal;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.4  2005/03/08 22:07:12  arniml
+-- added set selection
+--
 -- Revision 1.3  2005/02/18 06:42:12  arniml
 -- clarify wording for images
 --

@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.5 2005-03-08 22:07:12 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.6 2005-03-09 19:48:34 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -71,7 +71,7 @@ entity spi_boot is
     -- System Interface -------------------------------------------------------
     clk_i          : in  std_logic;
     reset_i        : in  std_logic;
-    set_sel_n_i    : in  std_logic_vector(width_set_sel_g-1 downto 0);
+    set_sel_i      : in  std_logic_vector(width_set_sel_g-1 downto 0);
     -- Card Interface ---------------------------------------------------------
     spi_clk_o      : out std_logic;
     spi_cs_n_o     : out std_logic;
@@ -800,7 +800,7 @@ begin
                      bit_cnt_q,
                      img_cnt_s,
                      send_cmd12_q,
-                     set_sel_n_i,
+                     set_sel_i,
                      upper_bitcnt_zero_s)
 
     subtype cmd_r is natural range 47 downto 0;
@@ -818,14 +818,11 @@ begin
     variable cmd_v      : ext_cmd_t;
     variable tx_v       : boolean;
 
-    variable set_sel_v  : std_logic_vector(width_set_sel_g-1 downto 0);
-
   begin
     -- default assignments
     spi_dat_s    <= '1';
     cmd_v        := (others => '1');
     tx_v         := false;
-    set_sel_v    := not set_sel_n_i;
 
     if cmd_fsm_q = CMD then
       case ctrl_fsm_q is
@@ -846,7 +843,7 @@ begin
                 downto 8 + num_bits_per_img_g) := img_cnt_s;
           -- insert set selection
           cmd_v(8 + num_bits_per_img_g + width_img_cnt_g + width_set_sel_g-1
-                downto 8 + num_bits_per_img_g + width_img_cnt_g) := set_sel_v;
+                downto 8 + num_bits_per_img_g + width_img_cnt_g) := set_sel_i;
           tx_v := true;
         when CMD18_DATA =>
           cmd_v(cmd_r) := cmd12_c;
@@ -943,6 +940,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.5  2005/03/08 22:07:12  arniml
+-- added set selection
+--
 -- Revision 1.4  2005/02/18 06:42:08  arniml
 -- clarify wording for images
 --
