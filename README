@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-13 21:32:40 $
+Version: $Date: 2005-02-16 19:03:26 $
 
 
 Description
@@ -16,10 +16,10 @@ implementations. The SD/MMC Bootloader fits both. Beyond configuration, this
 core supports a bootstrapping strategy where multiple sets are stored on one
 single memory card.
 For example consider a system completely based on SRAM. The bootloader
-provides an initial configuration image in the first set to the FPGA. This
-image contains a design which pulls the next set from the memory cards and
+provides an initial configuration image from the first set to the FPGA. This
+image contains a design which pulls the next set from the memory card and
 transfers this data to SRAM. In the third step the final FPGA design is
-loaded.
+loaded from the third set.
 
 
 Features
