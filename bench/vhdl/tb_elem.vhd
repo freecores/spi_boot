@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic testbench element for a specific feature set
 --
--- $Id: tb_elem.vhd,v 1.5 2005-03-08 22:06:21 arniml Exp $
+-- $Id: tb_elem.vhd,v 1.6 2005-03-09 19:48:04 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -127,6 +127,8 @@ architecture behav of tb_elem is
 
   signal set_sel_n_s : std_logic_vector(3 downto 0);
 
+  constant verbose_c : boolean := false;
+
 begin
 
   -- weak pull-ups
@@ -244,14 +246,14 @@ begin
                                           -- plus width_img_cnt_g
       set_sel_n_s <= not std_logic_vector(set_sel_v);
 
-      assert false
+      assert not verbose_c
         report chip_type_g & ": Processing set " & to_string(set)
         severity note;
 
       wait for 100 us;
       reset_s <= '1';
 
-      assert false
+      assert not verbose_c
         report chip_type_g & ": Requesting image 0"
         severity note;
 
@@ -278,7 +280,7 @@ begin
 
       rise_clk(10);
 
-      assert false
+      assert not verbose_c
         report chip_type_g & ": Requesting image 1"
         severity note;
 
@@ -301,7 +303,7 @@ begin
 
       rise_clk(10);
 
-      assert false
+      assert not verbose_c
         report chip_type_g & ": Requesting image 2"
         severity note;
 
@@ -348,6 +350,9 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.5  2005/03/08 22:06:21  arniml
+-- added set selection
+--
 -- Revision 1.4  2005/02/17 18:59:23  arniml
 -- clarify wording for images
 --
