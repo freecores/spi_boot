@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Simple SD and MMC model
 --
--- $Id: card.vhd,v 1.1 2005-02-08 21:09:20 arniml Exp $
+-- $Id: card.vhd,v 1.2 2005-02-13 17:06:22 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -359,11 +359,13 @@ begin
       read_spi_data_s <= '0';
 
       -- send payload
-      for i in 0 to to_integer(block_len_q)-1 loop
+      payload: for i in 0 to to_integer(block_len_q)-1 loop
         t_v := read_addr_q(0) & calc_crc(read_addr_q);
         for bit in 7 downto 0 loop
           fall_clk;
           read_spi_data_s <= t_v(bit);
+
+          exit payload when not start_read_s;
         end loop;
         inc_read_addr_s <= true;
         rise_clk;
@@ -371,13 +373,16 @@ begin
         wait for 10 ns;
       end loop;
 
-      -- send crc
-      for i in 0 to 15 loop
+      if start_read_s then
+        -- send crc
+        for i in 0 to 15 loop
+          fall_clk;
+          t_v := to_unsigned(i, 8);
+          read_spi_data_s <= t_v(0);
+        end loop;
         fall_clk;
-        t_v := to_unsigned(i, 8);
-        read_spi_data_s <= t_v(0);
-      end loop;
-      fall_clk;
+      end if;
+
       read_spi_data_s <= '1';
       reading_s <= false;
       -- loop for one "byte"
@@ -432,4 +437,7 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.1  2005/02/08 21:09:20  arniml
+-- initial check-in
+--
 -------------------------------------------------------------------------------
