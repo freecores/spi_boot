@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-02-20 13:39:06 $
+Version: $Date: 2005-02-20 16:53:54 $
 
 
 Description
@@ -44,6 +44,7 @@ Compatability
 
 These cards have been tested with the SD/MMC Bootloader:
 
+  * Hama 64 MB SD
   * SanDisk 128 MB SD
   * SanDisk 64 MB MMC
   * Panasonic 32 MB SD 
