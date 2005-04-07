@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.6 2005-03-09 19:48:34 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.7 2005-04-07 20:44:23 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -82,6 +82,7 @@ entity spi_boot is
     start_i        : in  std_logic;
     mode_i         : in  std_logic;
     config_n_o     : out std_logic;
+    detached_o     : out std_logic;
     cfg_init_n_i   : in  std_logic;
     cfg_done_i     : in  std_logic;
     dat_done_i     : in  std_logic;
@@ -932,6 +933,9 @@ begin
                       '0';
   cfg_clk_o      <= cfg_clk_q;
   cfg_dat_o      <= cfg_dat_q;
+  detached_o     <=   '0'
+                    when en_outs_q else
+                      '1';
 
 end rtl;
 
@@ -940,6 +944,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.6  2005/03/09 19:48:34  arniml
+-- invert level of set_sel input
+--
 -- Revision 1.5  2005/03/08 22:07:12  arniml
 -- added set selection
 --

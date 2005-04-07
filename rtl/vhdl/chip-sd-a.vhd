@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel design with SD feature set
 --
--- $Id: chip-sd-a.vhd,v 1.5 2005-03-09 19:48:34 arniml Exp $
+-- $Id: chip-sd-a.vhd,v 1.6 2005-04-07 20:44:23 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -73,6 +73,7 @@ architecture sd of chip is
       start_i        : in  std_logic;
       mode_i         : in  std_logic;
       config_n_o     : out std_logic;
+      detached_o     : out std_logic;
       cfg_init_n_i   : in  std_logic;
       cfg_done_i     : in  std_logic;
       dat_done_i     : in  std_logic;
@@ -114,6 +115,7 @@ begin
       start_i              => start_i,
       mode_i               => mode_i,
       config_n_o           => config_n_o,
+      detached_o           => detached_o,
       cfg_init_n_i         => cfg_init_n_i,
       cfg_done_i           => cfg_done_i,
       dat_done_i           => dat_done_i,
@@ -141,6 +143,9 @@ end sd;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.5  2005/03/09 19:48:34  arniml
+-- invert level of set_sel input
+--
 -- Revision 1.4  2005/03/08 22:07:12  arniml
 -- added set selection
 --

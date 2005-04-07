@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel
 --
--- $Id: chip-e.vhd,v 1.2 2005-03-08 22:07:11 arniml Exp $
+-- $Id: chip-e.vhd,v 1.3 2005-04-07 20:44:23 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -64,6 +64,7 @@ entity chip is
     start_i        : in  std_logic;
     mode_i         : in  std_logic;
     config_n_o     : out std_logic;
+    detached_o     : out std_logic;
     cfg_init_n_i   : in  std_logic;
     cfg_done_i     : in  std_logic;
     dat_done_i     : in  std_logic;
@@ -78,6 +79,9 @@ end chip;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.2  2005/03/08 22:07:11  arniml
+-- added set selection
+--
 -- Revision 1.1  2005/02/08 20:41:30  arniml
 -- initial check-in
 --

@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic testbench element for a specific feature set
 --
--- $Id: tb_elem.vhd,v 1.6 2005-03-09 19:48:04 arniml Exp $
+-- $Id: tb_elem.vhd,v 1.7 2005-04-07 20:43:36 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -85,6 +85,7 @@ architecture behav of tb_elem is
       start_i        : in  std_logic;
       mode_i         : in  std_logic;
       config_n_o     : out std_logic;
+      detached_o     : out std_logic;
       cfg_init_n_i   : in  std_logic;
       cfg_done_i     : in  std_logic;
       dat_done_i     : in  std_logic;
@@ -151,6 +152,7 @@ begin
       start_i        => start_s,
       mode_i         => mode_s,
       config_n_o     => config_n_s,
+      detached_o     => open,
       cfg_init_n_i   => cfg_init_n_s,
       cfg_done_i     => cfg_done_s,
       dat_done_i     => dat_done_s,
@@ -350,6 +352,9 @@ end behav;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.6  2005/03/09 19:48:04  arniml
+-- make verbosity level switchable
+--
 -- Revision 1.5  2005/03/08 22:06:21  arniml
 -- added set selection
 --
