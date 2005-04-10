@@ -79,6 +79,12 @@ work/chip-minimal-c.o: $(RTL_DIR)/chip-minimal-c.vhd \
                        work/spi_boot-c.o
 	$(ANALYZE) $(RTL_DIR)/chip-minimal-c.vhd
 
+work/ram_loader.o: $(RTL_DIR)/sample/ram_loader.vhd
+	$(ANALYZE) $(RTL_DIR)/sample/ram_loader.vhd
+work/ram_loader-c.o: $(RTL_DIR)/sample/ram_loader-c.vhd \
+                     work/ram_loader.o
+	$(ANALYZE) $(RTL_DIR)/sample/ram_loader-c.vhd
+
 work/tb_pack-p.o: $(BENCH_DIR)/tb_pack-p.vhd
 	$(ANALYZE) $(BENCH_DIR)/tb_pack-p.vhd
 
@@ -124,17 +130,30 @@ work/tb-c.o: $(BENCH_DIR)/tb-c.vhd    \
              work/tb_elem-minimal-c.o
 	$(ANALYZE) $(BENCH_DIR)/tb-c.vhd
 
+work/tb_rl.o: $(BENCH_DIR)/tb_rl.vhd
+	$(ANALYZE) $(BENCH_DIR)/tb_rl.vhd
+work/tb_rl-c.o: $(BENCH_DIR)/tb_rl-c.vhd \
+                work/tb_rl.o             \
+                work/chip-full-c.o       \
+                work/card-c.o            \
+                work/ram_loader-c.o
+	$(ANALYZE) $(BENCH_DIR)/tb_rl-c.vhd
+
 
 .PHONY: elaborate
-elaborate: tb_behav_c0
+elaborate: tb_behav_c0 tb_rl_behav_c0
 
-tb_behav_c0: analyze
+tb_behav_c0: work/tb-c.o
 	$(ELABORATE) tb_behav_c0; \
 	strip tb_behav_c0
 
+tb_rl_behav_c0: work/tb_rl-c.o
+	$(ELABORATE) tb_rl_behav_c0; \
+	strip tb_rl_behav_c0
+
 .PHONY: analyze
-analyze: work/tb-c.o
+analyze: work/tb-c.o work/tb_rl-c.o
 
 .PHONY: clean
 clean:
-	rm -rf work tb_behav_c0 *~
+	rm -rf work tb_behav_c0 tb_rl_behav_c0 *~
