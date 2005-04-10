@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Sample client for loading an image to asynchronous SRAM
 --
--- $Id: ram_loader.vhd,v 1.1 2005-02-18 20:49:00 arniml Exp $
+-- $Id: ram_loader.vhd,v 1.2 2005-04-10 17:17:23 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -61,6 +61,7 @@ entity ram_loader is
     start_o    : out   std_logic;
     mode_o     : out   std_logic;
     done_o     : out   std_logic;
+    detached_i : in    std_logic;
     -- Asynchronous RAM Interface ---------------------------------------------
     ram_addr_o : out   std_logic_vector(15 downto 0);
     ram_data_b : out   std_logic_vector( 7 downto 0);
@@ -92,25 +93,35 @@ architecture rtl of ram_loader is
                  FINISHED);
   signal fsm_s,
          fsm_q  : fsm_t;
+  signal done_q          : std_logic;
+  signal done_s          : boolean;
+  signal mode_q,
+         mode_s          : std_logic;
 
   signal ram_we_n_q,
          ram_we_n_s  : std_logic;
   signal ram_ce_n_q,
          ram_ce_n_s  : std_logic_vector(3 downto 0);
 
-  signal start_q         : std_logic;
-  signal trigger_start_s,
-         trigger_start_q : boolean;
-  signal seen_trigger_q  : boolean;
-  signal start_cnt_q     : unsigned(7 downto 0);
-  signal done_q          : std_logic;
-  signal done_s          : boolean;
-  signal mode_q,
-         mode_s          : std_logic;
-  signal enable_q        : boolean;
+  type start_fsm_t is (WAIT_DETACH,
+                       CHECK_NO_DONE,
+                       WAIT_DONE);
+  signal start_fsm_s,
+         start_fsm_q  : start_fsm_t;
+
+  signal start_s,
+         start_q         : std_logic;
+  signal enable_s,
+         enable_q        : boolean;
 
 begin
 
+  -----------------------------------------------------------------------------
+  -- Process seq
+  --
+  -- Purpose:
+  --   Implements the sequential elements clocked with cfg_clk_i.
+  --
   seq: process (cfg_clk_i, reset_i)
   begin
     if reset_i = '0' then
@@ -123,7 +134,7 @@ begin
       ram_we_n_q  <= '1';
       ram_ce_n_q  <= (others => '1');
       done_q      <= '0';
-      trigger_start_q <= false;
+      mode_q      <= '0';
 
     elsif cfg_clk_i'event and cfg_clk_i = '1' then
       if inc_addr_s then
@@ -148,53 +159,25 @@ begin
       ram_we_n_q <= ram_we_n_s;
       ram_ce_n_q <= ram_ce_n_s;
 
+      -- done only settable once
       if done_s then
         done_q <= '1';
       end if;
 
-      trigger_start_q <= trigger_start_s;
+      mode_q <= mode_s;
 
     end if;
   end process seq;
+  --
+  -----------------------------------------------------------------------------
 
 
-  start: process (clk_i, reset_i)
-    variable trigger_start_v : boolean;
-  begin
-    if reset_i = '0' then
-      start_cnt_q   <= (others => '0');
-      start_q       <= '0';
-      mode_q        <= '0';
-      enable_q      <= false;
-      seen_trigger_q <= false;
-
-    elsif clk_i'event and clk_i = '1' then
-      trigger_start_v := not seen_trigger_q and trigger_start_q;
-
-      if trigger_start_q then
-        seen_trigger_q <= true;
-      end if;
-
-      if trigger_start_v then
-        start_cnt_q <= (others => '0');
-      elsif start_q = '0' then
-        start_cnt_q <= start_cnt_q + 1;
-      end if;
-
-      if trigger_start_v then
-        start_q     <= '0';
-      elsif start_cnt_q = "11111111" then
-        start_q     <= '1';
-        enable_q    <= true;
-        if start_q = '0' then
-          mode_q    <= mode_s;
-        end if;
-      end if;
-
-    end if;
-  end process start;
-
-
+  -----------------------------------------------------------------------------
+  -- Process fsm
+  --
+  -- Purpose:
+  --   Implements the combinational logic of the RAM loader FSM.
+  --
   fsm: process (fsm_q,
                 bit_ovfl_q,
                 start_q,
@@ -203,7 +186,6 @@ begin
     -- default assignments
     inc_addr_s      <= false;
     ram_we_n_s      <= '1';
-    trigger_start_s <= false;
     done_s          <= false;
     fsm_s           <= IDLE;
     lamp_o          <= '1';
@@ -231,8 +213,8 @@ begin
       when INC_ADDR2 =>
         if addr_q = "001111111111111111" then  -- load only 64k
           fsm_s <= FINISHED;
-          trigger_start_s <= true;
           done_s <= true;
+          mode_s <= '1';
         else
           inc_addr_s <= true;
           fsm_s      <= IDLE;
@@ -247,12 +229,114 @@ begin
     end case;
 
   end process fsm;
+  --
+  -----------------------------------------------------------------------------
 
+
+  -----------------------------------------------------------------------------
+  -- Process ce_gen
+  --
+  -- Purpose:
+  --   Generates the four CE signals for the external RAM chips.
+  --
   ce_gen: process (addr_q)
   begin
     ram_ce_n_s <= (others => '1');
     ram_ce_n_s(to_integer(addr_q(17 downto 16))) <= '0';
   end process ce_gen;
+  --
+  -----------------------------------------------------------------------------
+
+
+  -----------------------------------------------------------------------------
+  -- Process start_seq
+  --
+  -- Purpose:
+  --   Implements the sequential elements clocked with clk_i.
+  --
+  start_seq: process (clk_i, reset_i)
+  begin
+    if reset_i = '0' then
+      start_fsm_q <= WAIT_DETACH;
+      start_q     <= '0';
+      enable_q    <= false;
+
+    elsif clk_i'event and clk_i = '1' then
+      start_fsm_q <= start_fsm_s;
+
+      enable_q    <= enable_s;
+
+      start_q     <= start_s;
+
+    end if;
+  end process start_seq;
+  --
+  -----------------------------------------------------------------------------
+
+
+  -----------------------------------------------------------------------------
+  -- Process start_comb
+  --
+  -- Purpose:
+  --   Implements the combinational logic of the start FSM.
+  --
+  start_comb: process (start_fsm_q,
+                       detached_i,
+                       done_q,
+                       enable_q,
+                       start_q)
+  begin
+    -- default assignments
+    start_fsm_s <= WAIT_DETACH;
+    enable_s    <= enable_q;
+    start_s     <= start_q;
+
+    case start_fsm_q is
+      -- Wait for detached_i to become '1'
+      -- This state is entered/left twice:
+      -- 1. after reset to start the data download
+      -- 2. after data download to start the next configuration cycle
+      when WAIT_DETACH =>
+        if detached_i = '1' then
+          start_fsm_s <= CHECK_NO_DONE;
+          enable_s    <= true;
+          start_s     <= '1';
+
+        else
+          start_fsm_s <= WAIT_DETACH;
+        end if;
+
+      -- Wait until done_q is '0'
+      -- This ensures that the FSM stalls when it has started the configuration
+      -- download. There must be no further action in this case.
+      when CHECK_NO_DONE =>
+        if done_q = '0' then
+          start_fsm_s <= WAIT_DONE;
+        else
+          start_fsm_s <= CHECK_NO_DONE;
+        end if;
+
+      -- Wait until done_q is '1'
+      -- done_q is the signal that the main FSM has finished its work. We
+      -- need to start the configuration download.
+      when WAIT_DONE =>
+        if done_q = '1' then
+          start_fsm_s <= WAIT_DETACH;
+          enable_s    <= false;
+          start_s     <= '0';
+        else
+          start_fsm_s <= WAIT_DONE;
+        end if;
+
+      when others =>
+        null;
+
+    end case;
+
+  end process start_comb;
+  --
+  -----------------------------------------------------------------------------
+
 
   -----------------------------------------------------------------------------
   -- Output Mapping
