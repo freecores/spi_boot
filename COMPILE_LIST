@@ -1,7 +1,7 @@
 
 Compile list for the spi_boot core
 ==================================
-Version: $Date: 2005-02-13 18:45:41 $
+Version: $Date: 2005-04-14 21:26:22 $
 
 bench/vhdl/tb.vhd
 rtl/vhdl/spi_boot_pack-p.vhd
@@ -27,3 +27,7 @@ rtl/vhdl/chip-minimal-a.vhd
 rtl/vhdl/chip-minimal-c.vhd
 bench/vhdl/tb_elem-minimal-c.vhd
 bench/vhdl/tb-c.vhd
+bench/vhdl/tb_rl.vhd
+rtl/vhdl/sample/ram_loader.vhd
+rtl/vhdl/sample/ram_loader-c.vhd
+bench/vhdl/tb_rl-c.vhd
