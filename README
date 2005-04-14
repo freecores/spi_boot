@@ -1,7 +1,7 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-03-13 18:33:00 $
+Version: $Date: 2005-04-14 21:32:58 $
 
 
 Description
@@ -103,7 +103,11 @@ The core's directory structure follows the proposal of OpenCores.org.
 
 spi_boot
  |
- \--+-- rtl
+ \--+-- doc                 : Documentation
+    |    |
+    |    \-- src            : Source files of documentation
+    |
+    +-- rtl
     |    |
     |    \-- vhdl           : VHDL code containing the RTL description
     |                         of the core.
