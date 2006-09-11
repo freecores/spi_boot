@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.7 2005-04-07 20:44:23 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.8 2006-09-11 23:03:36 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -208,7 +208,7 @@ begin
       ctrl_fsm_q   <= POWER_UP1;
       cmd_fsm_q    <= CMD;
       r1_result_q  <= '0';
-      en_outs_q    <= true;
+      en_outs_q    <= false;
 
     elsif clk_i'event and clk_i = '1' then
       -- bit counter control
@@ -944,6 +944,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.7  2005/04/07 20:44:23  arniml
+-- add new port detached_o
+--
 -- Revision 1.6  2005/03/09 19:48:34  arniml
 -- invert level of set_sel input
 --
