@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Generic counter module
 --
--- $Id: spi_counter.vhd,v 1.1 2005-02-08 20:41:33 arniml Exp $
+-- $Id: spi_counter.vhd,v 1.2 2007-02-25 18:24:12 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -52,13 +52,12 @@ entity spi_counter is
 
   generic (
     cnt_width_g   : integer := 4;
-    cnt_max_g     : integer := 15;
-    reset_level_g : integer := 0
+    cnt_max_g     : integer := 15
   );
 
   port (
     clk_i      : in  std_logic;
-    reset_i    : in  std_logic;
+    reset_i    : in  boolean;
     cnt_en_i   : in  boolean;
     cnt_o      : out std_logic_vector(cnt_width_g-1 downto 0);
     cnt_ovfl_o : out boolean
@@ -80,7 +79,7 @@ begin
 
   cnt: process (clk_i, reset_i)
   begin
-    if reset_i = reset_level_g then
+    if reset_i then
       cnt_q <= (others => '0');
 
     elsif clk_i'event and clk_i = '1' then
@@ -110,4 +109,7 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.1  2005/02/08 20:41:33  arniml
+-- initial check-in
+--
 -------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.8 2006-09-11 23:03:36 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.9 2007-02-25 18:24:12 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -102,12 +102,11 @@ architecture rtl of spi_boot is
   component spi_counter
     generic (
       cnt_width_g   : integer := 4;
-      cnt_max_g     : integer := 15;
-      reset_level_g : integer := 0
+      cnt_max_g     : integer := 15
     );
     port (
       clk_i      : in  std_logic;
-      reset_i    : in  std_logic;
+      reset_i    : in  boolean;
       cnt_en_i   : in  boolean;
       cnt_o      : out std_logic_vector(cnt_width_g-1 downto 0);
       cnt_ovfl_o : out boolean
@@ -178,11 +177,18 @@ architecture rtl of spi_boot is
   signal en_outs_s,
          en_outs_q      : boolean;
 
+  signal reset_s        : boolean;
+
   signal true_s         : boolean;
 
 begin
 
   true_s <= true;
+
+  reset_s <=   true
+             when (reset_level_g = 1 and reset_i = '1') or
+                  (reset_level_g = 0 and reset_i = '0') else
+               false;
 
   -----------------------------------------------------------------------------
   -- Process seq
@@ -190,12 +196,12 @@ begin
   -- Purpose:
   --   Implements several sequential elements.
   --
-  seq: process (clk_i, reset_i)
+  seq: process (clk_i, reset_s)
 
     variable bit_cnt_v : unsigned(1 downto 0);
 
   begin
-    if reset_i = reset_level_g then
+    if reset_s then
       -- reset bit counter to 63 for power up
       bit_cnt_q       <= (others => '0');
       bit_cnt_q(op_r) <= "111111";
@@ -358,9 +364,9 @@ begin
   --   The clock for FPGA config has an enable and is stopped on high level.
   --   There is a phase shift of half a period between spi_clk and cfg_clk.
   --
-  clk_gen: process (clk_i, reset_i)
+  clk_gen: process (clk_i, reset_s)
   begin
-    if reset_i = reset_level_g then
+    if reset_s then
       spi_clk_q        <= '0';
       cfg_clk_q        <= '1';
 
@@ -409,9 +415,9 @@ begin
   -- Essential for MMC clock compatibility mode.
   -----------------------------------------------------------------------------
   mmc_comap: if mmc_compat_clk_div_g > 0 generate
-    mmc_compat_sig: process (clk_i, reset_i)
+    mmc_compat_sig: process (clk_i, reset_s)
     begin
-      if reset_i = reset_level_g then
+      if reset_s then
         spi_clk_rising_q  <= false;
         spi_clk_falling_q <= false;
 
@@ -880,12 +886,11 @@ begin
     img_cnt_b : spi_counter
       generic map (
         cnt_width_g   => width_img_cnt_g,
-        cnt_max_g     => 2**width_img_cnt_g - 1,
-        reset_level_g => reset_level_g
+        cnt_max_g     => 2**width_img_cnt_g - 1
       )
       port map (
         clk_i         => clk_i,
-        reset_i       => reset_i,
+        reset_i       => reset_s,
         cnt_en_i      => cnt_en_img_s,
         cnt_o         => img_cnt_s(width_img_cnt_g-1 downto 0),
         cnt_ovfl_o    => open
@@ -905,12 +910,11 @@ begin
     mmc_cnt_b : spi_counter
       generic map (
         cnt_width_g   => width_mmc_clk_div_g,
-        cnt_max_g     => mmc_compat_clk_div_g,
-        reset_level_g => reset_level_g
+        cnt_max_g     => mmc_compat_clk_div_g
       )
       port map (
         clk_i         => clk_i,
-        reset_i       => reset_i,
+        reset_i       => reset_s,
         cnt_en_i      => true_s,
         cnt_o         => open,
         cnt_ovfl_o    => mmc_cnt_ovfl_s
@@ -944,6 +948,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.8  2006/09/11 23:03:36  arniml
+-- disable outputs with reset
+--
 -- Revision 1.7  2005/04/07 20:44:23  arniml
 -- add new port detached_o
 --
