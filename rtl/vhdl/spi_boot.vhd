@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.9 2007-02-25 18:24:12 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.10 2007-08-06 23:31:05 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -50,8 +50,6 @@ use ieee.std_logic_1164.all;
 entity spi_boot is
 
   generic (
-    -- width of set selection
-    width_set_sel_g      : integer := 4;
     -- width of bit counter: minimum 6, maximum 12
     width_bit_cnt_g      : integer := 6;
     -- width of image counter: minimum 0, maximum n
@@ -71,7 +69,8 @@ entity spi_boot is
     -- System Interface -------------------------------------------------------
     clk_i          : in  std_logic;
     reset_i        : in  std_logic;
-    set_sel_i      : in  std_logic_vector(width_set_sel_g-1 downto 0);
+    set_sel_i      : in  std_logic_vector(31-width_img_cnt_g-num_bits_per_img_g
+                                          downto 0);
     -- Card Interface ---------------------------------------------------------
     spi_clk_o      : out std_logic;
     spi_cs_n_o     : out std_logic;
@@ -635,7 +634,7 @@ begin
         end if;
 
 
-       -- Issued CMD12: STOP_TRANSMISSION --------------------------------------
+       -- Issued CMD12: STOP_TRANSMISSION -------------------------------------
        when CMD12 =>
          if cmd_finished_s then
            ctrl_fsm_s <= INC_IMG_CNT;
@@ -849,7 +848,7 @@ begin
           cmd_v(8 + num_bits_per_img_g + width_img_cnt_g
                 downto 8 + num_bits_per_img_g) := img_cnt_s;
           -- insert set selection
-          cmd_v(8 + num_bits_per_img_g + width_img_cnt_g + width_set_sel_g-1
+          cmd_v(8 + 31
                 downto 8 + num_bits_per_img_g + width_img_cnt_g) := set_sel_i;
           tx_v := true;
         when CMD18_DATA =>
@@ -948,6 +947,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.9  2007/02/25 18:24:12  arniml
+-- fix type handling of resets
+--
 -- Revision 1.8  2006/09/11 23:03:36  arniml
 -- disable outputs with reset
 --
