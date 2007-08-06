@@ -3,7 +3,7 @@
 -- SD/MMC Bootloader
 -- Chip toplevel design with MMC feature set
 --
--- $Id: chip-mmc-a.vhd,v 1.6 2005-04-07 20:44:23 arniml Exp $
+-- $Id: chip-mmc-a.vhd,v 1.7 2007-08-06 23:31:42 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -52,7 +52,6 @@ architecture mmc of chip is
 
   component spi_boot
     generic (
-      width_set_sel_g      : integer := 4;
       width_bit_cnt_g      : integer := 6;
       width_img_cnt_g      : integer := 2;
       num_bits_per_img_g   : integer := 18;
@@ -64,7 +63,8 @@ architecture mmc of chip is
     port (
       clk_i          : in  std_logic;
       reset_i        : in  std_logic;
-      set_sel_i      : in  std_logic_vector(width_set_sel_g-1 downto 0);
+      set_sel_i      : in  std_logic_vector(31-width_img_cnt_g-num_bits_per_img_g
+                                            downto 0);
       spi_clk_o      : out std_logic;
       spi_cs_n_o     : out std_logic;
       spi_data_in_i  : in  std_logic;
@@ -87,18 +87,24 @@ architecture mmc of chip is
   signal spi_data_out_s : std_logic;
   signal spi_en_outs_s  : std_logic;
 
-  signal set_sel_s      : std_logic_vector(3 downto 0);
+  constant width_img_cnt_c    : integer := 2;   -- 4 images
+  constant num_bits_per_img_c : integer := 18;  -- 256 kByte per image
+  constant set_sel_width_c    : integer := 31-width_img_cnt_c-num_bits_per_img_c;
+  signal   set_sel_s          : std_logic_vector(set_sel_width_c downto 0);
 
 begin
 
-  set_sel_s <= not set_sel_n_i;
+  set_sel_s <= (3 => not set_sel_n_i(3),
+                2 => not set_sel_n_i(2),
+                1 => not set_sel_n_i(1),
+                0 => not set_sel_n_i(0),
+                others => '0');
 
   spi_boot_b : spi_boot
     generic map (
-      width_set_sel_g      => 4,        -- 16 sets
       width_bit_cnt_g      => 12,       -- 512 bytes per block
-      width_img_cnt_g      => 2,        -- 4 images
-      num_bits_per_img_g   => 18,       -- 256 kByte per image
+      width_img_cnt_g      => width_img_cnt_c,
+      num_bits_per_img_g   => num_bits_per_img_c,
       sd_init_g            => 0,        -- no SD specific initialization
       mmc_compat_clk_div_g => 13,       -- MMC compat 400 kHz > 10 MHz / (13*2)
       width_mmc_clk_div_g  => 4         -- need 5 bits for MMC compat divider
@@ -143,6 +149,9 @@ end mmc;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.6  2005/04/07 20:44:23  arniml
+-- add new port detached_o
+--
 -- Revision 1.5  2005/03/09 19:48:34  arniml
 -- invert level of set_sel input
 --
