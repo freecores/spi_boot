@@ -18,7 +18,7 @@ BENCH_DIR   = $(PROJECT_DIR)/bench/vhdl
 
 
 ANALYZE=ghdl -a --std=87 --workdir=work
-ELABORATE=ghdl -e --std=87 --workdir=work
+ELABORATE=ghdl -e -Wl,-s --std=87 --workdir=work
 
 .PHONY: all
 all: work elaborate
@@ -144,12 +144,10 @@ work/tb_rl-c.o: $(BENCH_DIR)/tb_rl-c.vhd \
 elaborate: tb_behav_c0 tb_rl_behav_c0
 
 tb_behav_c0: work/tb-c.o
-	$(ELABORATE) tb_behav_c0; \
-	strip tb_behav_c0
+	$(ELABORATE) tb_behav_c0
 
 tb_rl_behav_c0: work/tb_rl-c.o
-	$(ELABORATE) tb_rl_behav_c0; \
-	strip tb_rl_behav_c0
+	$(ELABORATE) tb_rl_behav_c0
 
 .PHONY: analyze
 analyze: work/tb-c.o work/tb_rl-c.o
