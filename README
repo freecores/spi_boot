@@ -1,7 +1,8 @@
 
 README for the spi_boot core
 ============================
-Version: $Date: 2005-04-14 21:32:58 $
+Version: $Date: 2007-08-08 22:55:46 $
+$Name: not supported by cvs2svn $
 
 
 Description
@@ -83,7 +84,8 @@ configuration data as it is delivered from the card: Consecutive bytes each
 with its most significant bit first. Altera devices like the FLEX family are
 different here. They expect the bytes with least significant bit
 first. Therefore, the configuration data has to be swapped bitwise before it
-is written to the card.
+is written to the card. Michael Libeskind kindly provided a program that
+accimplishes this task. Find it in sw/misc/bit_reverse.c.
 
 
 Verification
