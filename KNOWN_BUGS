@@ -1,7 +1,7 @@
 
 Known bugs of the spi_boot core
 ===============================
-Version: $Date: 2007-08-05 20:22:02 $
+Version: $Date: 2007-08-08 00:40:46 $
 $Name: not supported by cvs2svn $
 
 
@@ -16,6 +16,10 @@ The controller FSM assumes that MMC cards result with
 has been accepted. However, the MMC standard defines this command,
 thus it is not save to rely on its nonexistence. Instead also a path from
 ACMD41 to CMD1 should be established.
+
+Fixed in:
+spi_boot.vhd 1.11
+Fix will be included in next release.
 
 
 
