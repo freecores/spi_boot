@@ -2,7 +2,7 @@
 --
 -- SD/MMC Bootloader
 --
--- $Id: spi_boot.vhd,v 1.10 2007-08-06 23:31:05 arniml Exp $
+-- $Id: spi_boot.vhd,v 1.11 2007-08-08 00:39:10 arniml Exp $
 --
 -- Copyright (c) 2005, Arnim Laeuger (arniml@opencores.org)
 --
@@ -169,7 +169,8 @@ architecture rtl of spi_boot is
 
   signal cmd_finished_s : boolean;
 
-  signal r1_result_q    : std_logic;
+  signal r1_illcmd_q,
+         r1_idle_q      : std_logic;
   signal done_q,
          send_cmd12_q   : boolean;
 
@@ -212,7 +213,8 @@ begin
       send_cmd12_q <= false;
       ctrl_fsm_q   <= POWER_UP1;
       cmd_fsm_q    <= CMD;
-      r1_result_q  <= '0';
+      r1_illcmd_q  <= '0';
+      r1_idle_q    <= '0';
       en_outs_q    <= false;
 
     elsif clk_i'event and clk_i = '1' then
@@ -272,13 +274,11 @@ begin
         bit_cnt_v := bit_cnt_q(1 downto 0);
         case bit_cnt_v(1 downto 0) is
           when "10" =>
-            -- always save "Illegal Command" flag
-            r1_result_q <= to_X01(spi_data_in_i);
+            -- save "Illegal Command" flag
+            r1_illcmd_q <= to_X01(spi_data_in_i);
           when "00" =>
-            -- overwrite with "Idle State" flag when not in CMD55
-            if ctrl_fsm_q /= CMD55 then
-              r1_result_q <= to_X01(spi_data_in_i);
-            end if;
+            -- save "Idle State" flag
+            r1_idle_q   <= to_X01(spi_data_in_i);
           when others =>
             null;
         end case;
@@ -457,7 +457,7 @@ begin
   --   Implements the controller FSM.
   --
   ctrl_fsm: process (ctrl_fsm_q,
-                     cmd_finished_s, r1_result_q,
+                     cmd_finished_s, r1_illcmd_q, r1_idle_q,
                      start_i, start_q, mode_i,
                      cfg_init_n_i)
 
@@ -515,8 +515,8 @@ begin
 
           mmc_compat_v   := true;
           if cmd_finished_s then
-            if r1_result_q = '0' then
-              -- command accepted, it's an SD card
+            if r1_illcmd_q = '0' then
+              -- command accepted, continue with ACMD41
               ctrl_fsm_s <= ACMD41;
             else
               -- command rejected, it's an MMC card
@@ -533,15 +533,23 @@ begin
       when ACMD41 =>
         if sd_init_g = 1 then
 
-          mmc_compat_v   := true;
+          mmc_compat_v     := true;
           if cmd_finished_s then
-            if r1_result_q = '0' then
-              ctrl_fsm_s <= CMD16;
+            if r1_illcmd_q = '0' then
+              -- ok, that's an SD card
+              if r1_idle_q = '0' then
+                ctrl_fsm_s <= CMD16;
+              else
+                ctrl_fsm_s <= CMD55;
+              end if;
+
             else
-              ctrl_fsm_s <= CMD55;
+              -- command rejected, though it accepted CMD55 -> it's an MMC
+              ctrl_fsm_s   <= CMD1;
             end if;
+
           else
-            ctrl_fsm_s   <= ACMD41;
+            ctrl_fsm_s     <= ACMD41;
           end if;
 
         end if;
@@ -551,7 +559,7 @@ begin
       when CMD1 =>
         mmc_compat_v   := true;
         if cmd_finished_s then
-          if r1_result_q = '0' then
+          if r1_idle_q = '0' then
             ctrl_fsm_s <= CMD16;
           else
             ctrl_fsm_s <= CMD1;
@@ -947,6 +955,9 @@ end rtl;
 -- File History:
 --
 -- $Log: not supported by cvs2svn $
+-- Revision 1.10  2007/08/06 23:31:05  arniml
+-- enlarge set_sel_i input to fill all upper bits of the 32 bit address vector
+--
 -- Revision 1.9  2007/02/25 18:24:12  arniml
 -- fix type handling of resets
 --
